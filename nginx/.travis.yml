@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t emircm/docker-react -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run emircm/docker-react npm test -- --coverage
+
+after_success:
+  - docker build -t emircm/multi-client ./client
+  - docker build -t emircm/multi-nginx ./nginx
+  - docker build -t emircm/multi-server ./server
+  - docker build -t emircm/multi-worker ./worker
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push to docker hub
+  - docker push emircm/multi-client
+  - docker push emircm/multi-nginx
+  - docker push emircm/multi-server
+  - docker push emircm/multi-worker
